@@ -14,8 +14,9 @@ class RedisClient {
     //   .on('connect', () => { isConnected = true; })
     //   .on('error', () => { isConnected = false; });
 
-      // return isConnected;
-      return this.client.isConnected();
+    // return isConnected;
+    if (this.client.connected) return true;
+    return false;
   }
 
   async get(key) {
