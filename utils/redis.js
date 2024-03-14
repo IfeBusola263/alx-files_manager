@@ -9,12 +9,13 @@ class RedisClient {
   }
 
   isAlive() {
-    let isConnected = true;
-    this.client
-      .on('connect', () => { isConnected = true; })
-      .on('error', () => { isConnected = false; });
+    // let isConnected = true;
+    // this.client
+    //   .on('connect', () => { isConnected = true; })
+    //   .on('error', () => { isConnected = false; });
 
-    return isConnected;
+      // return isConnected;
+      return this.client.isConnected();
   }
 
   async get(key) {
