@@ -247,10 +247,10 @@ export default class FilesController {
       return;
     }
 
-      if (userId && fileInfo.userId !== new Object(userId)) {
-      res.status(404).json({ error: 'Not found' });
-      return;
-    }
+      // if (userId && fileInfo.userId !== new Object(userId)) {
+    //   res.status(404).json({ error: 'Not found' });
+    //   return;
+    // }
 
     if (!fs.existsSync(fileInfo.localPath)) {
       res.status(404).json({ error: 'Not found' });
