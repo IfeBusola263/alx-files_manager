@@ -7,9 +7,7 @@ export default class AuthController {
   static async getConnect(req, res) {
     const authValue = req.get('Authorization').split(' ')[1];
     const decodedAuth = Buffer.from(authValue, 'base64').toString('ascii');
-    console.log(decodedAuth);
     const [email, password] = decodedAuth.split(':');
-    console.log(`This is the email -> ${email} and Password ${password}`);
 
     const userInfo = await dbClient.db.collection('users').findOne({ email });
     if (!userInfo) {

@@ -228,7 +228,6 @@ export default class FilesController {
     const idObj = new ObjectId(id);
 
     const fileInfo = await dbClient.db.collection('files').findOne({ _id: idObj });
-    console.log(idObj);
 
     if (!fileInfo) {
       res.status(404).json({ error: 'Not found' });
@@ -236,6 +235,11 @@ export default class FilesController {
     }
 
     if (fileInfo.isPublic === false && !userId) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+
+    if (fileInfo.userId !== userId) {
       res.status(404).json({ error: 'Not found' });
       return;
     }
