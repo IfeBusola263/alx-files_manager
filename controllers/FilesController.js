@@ -1,3 +1,5 @@
+/* eslint-disable no-new-object */
+/* eslint-disable no-param-reassign */
 import { ObjectId } from 'mongodb';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
@@ -56,14 +58,12 @@ export default class FilesController {
         userId: userObjId,
         name,
         type,
-        parentId: parentId || 0,
+        parentId: new Object(parentId) || 0,
         isPublic: false,
       };
 
       await dbClient.db.collection('files').insertOne(newFolderInfo);
       const folder = await dbClient.db.collection('files').findOne({ name, userId: userObjId });
-      folder.id = folder._id;
-      delete folder._id;
       res.status(201).json(folder);
       return;
     }
@@ -84,14 +84,77 @@ export default class FilesController {
       type,
       localPath: pathToFile,
       isPublic: isPublic || false,
-      parentId: parentId || 0,
+      parentId: new ObjectId(parentId) || 0,
     };
 
     await dbClient.db.collection('files').insertOne(fileInfo);
     const storedInfo = await dbClient.db.collection('files').findOne({ name });
-    storedInfo.id = storedInfo._id;
-    delete storedInfo._id;
     delete storedInfo.localPath;
     res.status(201).json(storedInfo);
+  }
+
+  static async getShow(req, res) {
+    const { id } = req.params;
+    const token = req.get('X-Token');
+    const userRedisKey = `auth_${token}`;
+    const userId = await redisClient.get(userRedisKey);
+
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const userObjId = new ObjectId(id);
+    const userInfo = await dbClient.db.collection('files').findOne({ _id: userObjId });
+    if (!userInfo) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+
+    delete userInfo.localPath;
+    res.status(200).json(userInfo);
+  }
+
+  static async getIndex(req, res) {
+    const token = req.get('X-Token');
+    const userRedisKey = `auth_${token}`;
+    const userId = await redisClient.get(userRedisKey);
+    const pageSize = 20;
+
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { parentId, page } = req.query;
+
+    if (parentId) {
+      if (page) {
+        const start = (page - 1) * pageSize;
+        // const end = start + pageSize;
+
+        const pipeline = [
+          { $match: { parentId } },
+          { $skip: start },
+          { $limit: pageSize },
+        ];
+
+        const files = await dbClient.db.collection('files').aggregate(pipeline).toArray();
+        res.status(200).json(files);
+        return;
+      }
+
+      // const parentObjId = new ObjectId(parentId);
+      const files = await dbClient.db.collection('files').find({ parentId });
+      const filesList = await files.toArray();
+      res.status(200).json(filesList);
+      return;
+    }
+
+    const allFiles = await dbClient.db.collection('files').find();
+    const allFilesList = await allFiles.toArray();
+    allFilesList.forEach((fileObj) => {
+      delete fileObj.localPath;
+    });
+    res.status(200).json(allFilesList);
   }
 }
