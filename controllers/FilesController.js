@@ -106,11 +106,8 @@ export default class FilesController {
     }
     const idObj = new ObjectId(id);
     const userObjId = new ObjectId(userId);
-    const userInfo = await dbClient.db.collection('files').findOne(
-      { _id: idObj },
-      { userid: userObjId },
-    );
-    if (!userInfo) {
+    const userInfo = await dbClient.db.collection('files').findOne({ _id: idObj });
+    if (!userInfo || userInfo.userId !== userObjId) {
       res.status(404).json({ error: 'Not found' });
       return;
     }
