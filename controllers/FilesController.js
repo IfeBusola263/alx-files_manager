@@ -239,13 +239,13 @@ export default class FilesController {
       return;
     }
 
-    if (userId && fileInfo.userId !== userId) {
-      res.status(404).json({ error: 'Not found' });
+    if (fileInfo.type === 'folder') {
+      res.status(400).json({ error: "A folder doesn't have content" });
       return;
     }
 
-    if (fileInfo.type === 'folder') {
-      res.status(400).json({ error: "A folder doesn't have content" });
+    if (userId && fileInfo.userId !== userId) {
+      res.status(404).json({ error: 'Not found' });
       return;
     }
 
