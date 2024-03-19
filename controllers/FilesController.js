@@ -239,7 +239,7 @@ export default class FilesController {
       return;
     }
 
-    if (fileInfo.userId !== userId) {
+    if (userId && fileInfo.userId !== userId) {
       res.status(404).json({ error: 'Not found' });
       return;
     }
