@@ -3,6 +3,7 @@
 import { ObjectId } from 'mongodb';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import mime from 'mime-types';
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
 
@@ -218,5 +219,45 @@ export default class FilesController {
     const storedInfo = await dbClient.db.collection('files').findOne({ _id: idObj });
     delete storedInfo.localPath;
     res.status(200).json(storedInfo);
+  }
+
+  static async getFile(req, res) {
+    const token = req.get('X-Token');
+    const userId = await redisClient.get(`auth_${token}`);
+    const { id } = req.params;
+    const idObj = new ObjectId(id);
+
+    const fileInfo = await dbClient.db.collection('files').findOne({ _id: idObj });
+    console.log(idObj);
+
+    if (!fileInfo) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+
+    if (fileInfo.isPublic === false && !userId) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+
+    if (fileInfo.type === 'folder') {
+      res.status(400).json({ error: "A folder doesn't have content" });
+      return;
+    }
+
+    if (!fs.existsSync(fileInfo.localPath)) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+
+    const mimeType = mime.contentType(fileInfo.name);
+    fs.readFile(fileInfo.localPath, 'utf8', (err, data) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      res.setHeader('Content-Type', mimeType);
+      res.status(200).send(data);
+    });
   }
 }
