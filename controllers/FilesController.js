@@ -104,8 +104,12 @@ export default class FilesController {
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
-    const userObjId = new ObjectId(id);
-    const userInfo = await dbClient.db.collection('files').findOne({ _id: userObjId });
+    const idObj = new ObjectId(id);
+    const userObjId = new ObjectId(userId);
+    const userInfo = await dbClient.db.collection('files').findOne(
+      { _id: idObj },
+      { userid: userObjId },
+    );
     if (!userInfo) {
       res.status(404).json({ error: 'Not found' });
       return;
@@ -172,8 +176,6 @@ export default class FilesController {
     const { id } = req.params;
     const idObj = new ObjectId(id);
     const userObjId = new ObjectId(userId);
-
-    console.log(`id ==> ${id} |  userId ===> ${userId}`);
 
     const fileInfo = await dbClient.db.collection('files').findOne({ _id: idObj, userId: userObjId });
     if (!fileInfo) {
