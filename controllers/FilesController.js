@@ -238,18 +238,15 @@ export default class FilesController {
       return;
     }
 
-    console.log(fileInfo);
-    console.log('whats Wrong');
-
     if (fileInfo.type === 'folder') {
       res.status(400).json({ error: "A folder doesn't have content" });
       return;
     }
 
-    // if (userId && fileInfo.userId !== new Object(userId)) {
-    //   res.status(404).json({ error: 'Not found' });
-    //   return;
-    // }
+    if (fileInfo.isPublic === false && fileInfo.userId !== new Object(userId)) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
 
     if (!fs.existsSync(fileInfo.localPath)) {
       res.status(404).json({ error: 'Not found' });
