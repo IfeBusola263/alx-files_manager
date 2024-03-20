@@ -112,6 +112,8 @@ export default class FilesController {
     }
 
     delete userInfo.localPath;
+    userInfo.id = userInfo._id;
+    delete userInfo._id;
     res.status(200).json(userInfo);
   }
 
@@ -149,6 +151,8 @@ export default class FilesController {
       const filesList = await files.toArray();
       filesList.forEach((file) => {
         delete file.localPath;
+        file.id = file._id;
+        delete file._id;
       });
       res.status(200).json(filesList);
       return;
@@ -158,6 +162,8 @@ export default class FilesController {
     const allFilesList = await allFiles.toArray();
     allFilesList.forEach((fileObj) => {
       delete fileObj.localPath;
+      fileObj.id = fileObj._id;
+      delete fileObj._id;
     });
     res.status(200).json(allFilesList);
   }
