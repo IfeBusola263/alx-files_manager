@@ -59,8 +59,7 @@ export default class FilesController {
         userId: userObjId,
         name,
         type,
-        parentId: new Object(parentId) || 0,
-        isPublic: false,
+        parentId: parentId ? new ObjectId(parentId) : 0,
       };
 
       await dbClient.db.collection('files').insertOne(newFolderInfo);
@@ -83,9 +82,9 @@ export default class FilesController {
       userId: userObjId,
       name,
       type,
-      localPath: pathToFile,
       isPublic: isPublic || false,
-      parentId: new ObjectId(parentId) || 0,
+      parentId: parentId ? new ObjectId(parentId) : 0,
+      localPath: pathToFile,
     };
 
     await dbClient.db.collection('files').insertOne(fileInfo);
@@ -105,9 +104,9 @@ export default class FilesController {
       return;
     }
     const idObj = new ObjectId(id);
-    const userObjId = new ObjectId(userId);
     const userInfo = await dbClient.db.collection('files').findOne({ _id: idObj });
-    if (!userInfo || userInfo.userId !== userObjId) {
+
+    if (!userInfo || userInfo.userId.toString() !== userId) {
       res.status(404).json({ error: 'Not found' });
       return;
     }
@@ -145,9 +144,12 @@ export default class FilesController {
         return;
       }
 
-      // const parentObjId = new ObjectId(parentId);
-      const files = await dbClient.db.collection('files').find({ parentId });
+      const parentObjId = new ObjectId(parentId);
+      const files = await dbClient.db.collection('files').find({ parentId: parentObjId });
       const filesList = await files.toArray();
+      filesList.forEach((file) => {
+        delete file.localPath;
+      });
       res.status(200).json(filesList);
       return;
     }
@@ -222,7 +224,9 @@ export default class FilesController {
 
   static async getFile(req, res) {
     const token = req.get('X-Token');
-    const userId = await redisClient.get(`auth_${token}`);
+    const userRedisKey = `auth_${token}`;
+    const userId = await redisClient.get(userRedisKey);
+    console.log(userId);
     const { id } = req.params;
     const idObj = new ObjectId(id);
 
@@ -233,17 +237,17 @@ export default class FilesController {
       return;
     }
 
-    if (fileInfo.isPublic === false && !userId) {
-      res.status(404).json({ error: 'Not found' });
-      return;
-    }
+    // if (fileInfo.isPublic === false && !userId) {
+    //   res.status(404).json({ error: 'Not found' });
+    //   return;
+    // }
 
     if (fileInfo.type === 'folder') {
       res.status(400).json({ error: "A folder doesn't have content" });
       return;
     }
 
-    if (fileInfo.isPublic === false && fileInfo.userId !== new Object(userId)) {
+    if (fileInfo.isPublic === false && fileInfo.userId !== userId) {
       res.status(404).json({ error: 'Not found' });
       return;
     }
