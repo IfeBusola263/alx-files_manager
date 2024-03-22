@@ -250,14 +250,13 @@ export default class FilesController {
     //   res.status(404).json({ error: 'Not found' });
     //   return;
     // }
-
-    if (fileInfo.type === 'folder') {
-      res.status(400).json({ error: "A folder doesn't have content" });
+    if (fileInfo.isPublic === false && fileInfo.userId.toString() !== userId) {
+      res.status(404).json({ error: 'Not found' });
       return;
     }
 
-    if (fileInfo.isPublic === false && fileInfo.userId.toString() !== userId) {
-      res.status(404).json({ error: 'Not found' });
+    if (fileInfo.type === 'folder') {
+      res.status(400).json({ error: "A folder doesn't have content" });
       return;
     }
 
