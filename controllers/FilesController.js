@@ -64,7 +64,8 @@ export default class FilesController {
 
       await dbClient.db.collection('files').insertOne(newFolderInfo);
       const folder = await dbClient.db.collection('files').findOne({ name, userId: userObjId });
-      res.status(201).json(folder);
+      const { _id, ...rest } = folder;
+      res.status(201).json({ id: _id, ...rest });
       return;
     }
 
@@ -90,7 +91,8 @@ export default class FilesController {
     await dbClient.db.collection('files').insertOne(fileInfo);
     const storedInfo = await dbClient.db.collection('files').findOne({ name });
     delete storedInfo.localPath;
-    res.status(201).json(storedInfo);
+    const { _id, ...rest } = storedInfo;
+    res.status(201).json({ id: _id, ...rest });
   }
 
   static async getShow(req, res) {
@@ -144,14 +146,11 @@ export default class FilesController {
         res.status(200).json(files);
         return;
       }
-
       const parentObjId = new ObjectId(parentId);
       const files = await dbClient.db.collection('files').find({ parentId: parentObjId });
       const filesList = await files.toArray();
       filesList.forEach((file) => {
         delete file.localPath;
-        // file.id = file._id;
-        // delete file._id;
       });
       const dataToSend = filesList.map((obj) => {
         const { _id, ...rest } = obj;
@@ -165,8 +164,6 @@ export default class FilesController {
     const allFilesList = await allFiles.toArray();
     allFilesList.forEach((fileObj) => {
       delete fileObj.localPath;
-      // fileObj.id = fileObj._id;
-      // delete fileObj._id;
     });
     const dataToSend = allFilesList.map((obj) => {
       const { _id, ...rest } = obj;
@@ -239,7 +236,6 @@ export default class FilesController {
     const token = req.get('X-Token');
     const userRedisKey = `auth_${token}`;
     const userId = await redisClient.get(userRedisKey);
-    console.log(userId);
     const { id } = req.params;
     const idObj = new ObjectId(id);
 
@@ -260,7 +256,7 @@ export default class FilesController {
       return;
     }
 
-    if (fileInfo.isPublic === false && fileInfo.userId !== userId) {
+    if (fileInfo.isPublic === false && fileInfo.userId.toString() !== userId) {
       res.status(404).json({ error: 'Not found' });
       return;
     }
